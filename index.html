@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kraut & Rüben</title>
+<meta name="description" content="Euer gemeinsames Küchenbuch" />
+
+<!-- PWA / Home-Bildschirm -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#F4F6F0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Kraut & Rüben" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" href="icon-192.png" />
+
+<style>
+  html, body { margin: 0; padding: 0; background: #F4F6F0; font-size: 17px; -webkit-tap-highlight-color: transparent; }
+  #root { min-height: 100vh; }
+  #boot-msg { font-family: sans-serif; color: #5B6B5E; text-align: center; padding: 40px 20px; white-space: pre-wrap; }
+  #boot-msg.error { color: #A6443C; text-align: left; font-family: monospace; font-size: 13px; }
+  input, select, textarea, button { font-size: 16px; }
+</style>
+
+<!-- Tailwind CSS (im Claude-Artefakt automatisch vorhanden, hier per CDN nachgerüstet) -->
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<div id="root"><div id="boot-msg">Kraut &amp; Rüben lädt …</div></div>
+
+<!-- Sichtbare Fehleranzeige, falls beim Laden etwas schiefgeht -->
+<script>
+  window.addEventListener('error', function (e) {
+    var el = document.getElementById('boot-msg');
+    if (el) {
+      el.className = 'error';
+      el.textContent = 'Fehler beim Laden:\n' + (e.message || (e.error && e.error.message) || String(e.error || e));
+    }
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var el = document.getElementById('boot-msg');
+    if (el) {
+      el.className = 'error';
+      el.textContent = 'Fehler beim Laden (Promise):\n' + (e.reason && e.reason.message ? e.reason.message : String(e.reason));
+    }
+  });
+</script>
+
+<!-- React 18 (klassische Skript-Einbindung, kein Build-Schritt noetig) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+<!-- Babel im Browser, damit die JSX-Datei ohne Build-Schritt läuft -->
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+<!-- Cloud-Speicher (ersetzt Claudes internen Speicher) -->
+<script src="storage-shim.js"></script>
+
+<!-- Die eigentliche App -->
+<script type="text/babel" data-presets="react" src="app-module.js"></script>
+</body>
+</html>
