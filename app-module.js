@@ -1,6 +1,6 @@
 
 // --- Lokale Icons (ersetzt lucide-react, keine externe Icon-Bibliothek noetig) ---
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 function IconBase({ size = 16, children, ...p }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -325,7 +325,7 @@ function getBadges(stats) {
 
 const DEFAULT_DATA = { recipes: [], weekPlan: {}, shoppingChecked: {}, plantLog: {}, shoppingExtras: {}, customPlants: [], planTemplates: [], shoppingOverrides: {} };
 const EMPTY_ING = () => ({ id: uid(), name: '', amount: '', unit: 'g', isPlant: false, cat: undefined, quarter: false, perHundred: null, kcal: '', protein: '', fat: '', carbs: '', fiber: '' });
-const EMPTY_RECIPE = () => ({ id: uid(), isNew: true, name: '', servings: 2, category: '', instructions: '', hasPhoto: false, photoDataUrl: null, removePhoto: false, ingredients: [EMPTY_ING()] });
+const EMPTY_RECIPE = () => ({ id: uid(), isNew: true, name: '', servings: 2, category: '', instructions: '', hasPhoto: false, photoDataUrl: null, removePhoto: false, ingredients: [] });
 
 function handlePhotoFile(e, onChange, draft) {
   const file = e.target.files && e.target.files[0];
@@ -356,6 +356,7 @@ const fonts = `
 .f-mono { font-family: 'IBM Plex Mono', monospace; }
 .scroll-thin::-webkit-scrollbar { height: 6px; width: 6px; }
 .scroll-thin::-webkit-scrollbar-thumb { background: #C7CFC0; border-radius: 4px; }
+input, select, textarea { font-size: 16px !important; }
 `;
 
 const C = {
@@ -377,6 +378,7 @@ function App() {
   const [tab, setTab] = useState('recipes');
   const [weekOffset, setWeekOffset] = useState(0);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [error, setError] = useState('');
 
@@ -388,8 +390,6 @@ function App() {
       const parsed = res && res.value ? JSON.parse(res.value) : DEFAULT_DATA;
       setData({ ...DEFAULT_DATA, ...parsed });
     } catch (e) {
-      console.error('Laden fehlgeschlagen:', e);
-      setError('Laden fehlgeschlagen: ' + (e && e.message ? e.message : String(e)));
       setData(DEFAULT_DATA);
     }
     setLoading(false);
@@ -399,11 +399,10 @@ function App() {
     setData(next);
     try {
       const res = await window.storage.set('household-data', JSON.stringify(next), true);
-      if (!res) setError('Speichern fehlgeschlagen (kein Ergebnis vom Speicher).');
+      if (!res) setError('Speichern hat nicht geklappt. Bitte nochmal versuchen.');
       else setError('');
     } catch (e) {
-      console.error('Speichern fehlgeschlagen:', e);
-      setError('Speichern fehlgeschlagen: ' + (e && e.message ? e.message : String(e)));
+      setError('Speichern hat nicht geklappt. Bitte nochmal versuchen.');
     }
   }
 
@@ -601,10 +600,10 @@ function App() {
 
       <header className="sticky top-0 z-10 px-4 pt-5 pb-3" style={{ background: C.page, borderBottom: `1px solid ${C.line}` }}>
         <div className="flex items-baseline justify-between">
-          <h1 className="f-display text-2xl" style={{ fontWeight: 600 }}>Kraut & Rüben</h1>
+          <h1 className="f-display text-2xl" style={{ fontWeight: 600 }}>„Kraut &amp; Rüben"</h1>
           <span className="text-xs f-mono" style={{ color: C.inkSoft }}>{data.recipes.length} Rezepte</span>
         </div>
-        <p className="text-xs mt-0.5" style={{ color: C.inkSoft }}>euer gemeinsames Küchenbuch</p>
+        <p className="text-xs mt-0.5" style={{ color: C.inkSoft }}>Meal Prepping by Johanna &amp; Kai-Lucas</p>
 
         <nav className="flex gap-1 mt-4 overflow-x-auto scroll-thin">
           {[
@@ -636,6 +635,7 @@ function App() {
           <RecipesTab
             recipes={data.recipes}
             onAdd={() => setEditing(EMPTY_RECIPE())}
+            onOpen={r => setViewing(r)}
             onEdit={r => setEditing({ ...JSON.parse(JSON.stringify(r)), isNew: false, photoDataUrl: null, removePhoto: false })}
             onDelete={id => setConfirmDelete(id)}
           />
@@ -703,6 +703,16 @@ function App() {
         )}
       </main>
 
+      {viewing && (
+        <RecipeDetail
+          recipe={viewing}
+          onClose={() => setViewing(null)}
+          onEdit={r => { setViewing(null); setEditing({ ...JSON.parse(JSON.stringify(r)), isNew: false, photoDataUrl: null, removePhoto: false }); }}
+          onDelete={id => { setViewing(null); setConfirmDelete(id); }}
+          onAssign={assign}
+        />
+      )}
+
       {editing && (
         <RecipeEditor
           draft={editing}
@@ -743,7 +753,7 @@ function WeekNav({ monday, weekOffset, setWeekOffset }) {
   );
 }
 
-function RecipePhotoThumb({ id, hasPhoto }) {
+function RecipePhotoThumb({ id, hasPhoto, size = 80, wide = false }) {
   const [src, setSrc] = useState(null);
   useEffect(() => {
     if (!hasPhoto) { setSrc(null); return; }
@@ -751,12 +761,19 @@ function RecipePhotoThumb({ id, hasPhoto }) {
     window.storage.get('photo:' + id, true).then(res => { if (active && res) setSrc(res.value); }).catch(() => {});
     return () => { active = false; };
   }, [id, hasPhoto]);
-  if (!hasPhoto) return null;
-  if (!src) return <div className="w-full h-28 rounded-lg mb-2 animate-pulse" style={{ background: C.leafSoft }} />;
-  return <img src={src} alt="" className="w-full h-28 object-cover rounded-lg mb-2" />;
+  const boxStyle = wide ? { width: '100%', height: 180 } : { width: size, height: size };
+  if (!hasPhoto) {
+    return (
+      <div className="rounded-lg flex items-center justify-center shrink-0" style={{ ...boxStyle, background: C.leafSoft }}>
+        <BookOpen size={wide ? 32 : Math.round(size * 0.35)} style={{ color: C.leaf, opacity: 0.5 }} />
+      </div>
+    );
+  }
+  if (!src) return <div className="rounded-lg animate-pulse shrink-0" style={boxStyle} />;
+  return <img src={src} alt="" className="rounded-lg object-cover shrink-0" style={boxStyle} />;
 }
 
-function RecipesTab({ recipes, onAdd, onEdit, onDelete }) {
+function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
   if (recipes.length === 0) {
     return (
       <div className="text-center py-16">
@@ -781,33 +798,141 @@ function RecipesTab({ recipes, onAdd, onEdit, onDelete }) {
           const perServing = Math.round(totals.kcal / (r.servings || 1));
           const plantCount = new Set(r.ingredients.filter(i => i.isPlant && i.name.trim()).map(i => i.name.trim().toLowerCase())).size;
           return (
-            <div key={r.id} className="rounded-xl p-4" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-              <RecipePhotoThumb id={r.id} hasPhoto={r.hasPhoto} />
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="f-display text-lg leading-tight" style={{ fontWeight: 600 }}>{r.name || 'Ohne Titel'}</h3>
-                  {r.category && (
-                    <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>{r.category}</span>
+            <div key={r.id} onClick={() => onOpen(r)} className="rounded-xl p-3 flex gap-3 cursor-pointer items-start"
+              style={{ background: C.card, border: `1px solid ${C.line}` }}>
+              <RecipePhotoThumb id={r.id} hasPhoto={r.hasPhoto} size={72} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="f-display text-base leading-tight truncate" style={{ fontWeight: 600 }}>{r.name || 'Ohne Titel'}</h3>
+                    {r.category && (
+                      <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>{r.category}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => onEdit(r)} className="p-1.5 rounded-full" style={{ color: C.inkSoft }}><Pencil size={14} /></button>
+                    <button onClick={() => onDelete(r.id)} className="p-1.5 rounded-full" style={{ color: C.accent }}><Trash2 size={14} /></button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 mt-1.5 text-xs f-mono flex-wrap" style={{ color: C.inkSoft }}>
+                  <span>{r.servings} Port.</span>
+                  {totals.kcal > 0 && <span>{perServing} kcal</span>}
+                  {plantCount > 0 && (
+                    <span className="flex items-center gap-1" style={{ color: C.leaf }}><Leaf size={12} />{plantCount}</span>
                   )}
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <button onClick={() => onEdit(r)} className="p-1.5 rounded-full" style={{ color: C.inkSoft }}><Pencil size={14} /></button>
-                  <button onClick={() => onDelete(r.id)} className="p-1.5 rounded-full" style={{ color: C.accent }}><Trash2 size={14} /></button>
-                </div>
               </div>
-              <div className="flex items-center gap-3 mt-2 text-xs f-mono" style={{ color: C.inkSoft }}>
-                <span>{r.servings} Portionen</span>
-                {totals.kcal > 0 && <span>{perServing} kcal/Port.</span>}
-                {plantCount > 0 && (
-                  <span className="flex items-center gap-1" style={{ color: C.leaf }}><Leaf size={12} />{plantCount}</span>
-                )}
-              </div>
-              {r.instructions && (
-                <p className="text-sm mt-2 line-clamp-2" style={{ color: C.inkSoft }}>{r.instructions}</p>
-              )}
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign }) {
+  const [showAssign, setShowAssign] = useState(false);
+  const [day, setDay] = useState(DAYS_SHORT[0]);
+  const [meal, setMeal] = useState(MEALS[0]);
+  const [assigned, setAssigned] = useState(false);
+  if (!recipe) return null;
+  const totals = recipe.ingredients.reduce((acc, i) => {
+    const n = ingredientNutrients(i);
+    acc.kcal += n.kcal; acc.protein += n.protein; acc.fat += n.fat; acc.carbs += n.carbs; acc.fiber += n.fiber;
+    return acc;
+  }, { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 });
+  const servings = Math.max(1, num(recipe.servings) || 1);
+  const plantCount = new Set(recipe.ingredients.filter(i => i.isPlant && i.name.trim()).map(i => i.name.trim().toLowerCase())).size;
+
+  function confirmAssign() {
+    onAssign(day, meal, recipe.id);
+    setAssigned(true);
+    setTimeout(() => { setAssigned(false); setShowAssign(false); }, 900);
+  }
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-end md:items-center justify-center" style={{ background: 'rgba(30,46,34,0.45)' }}>
+      <div className="w-full md:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl md:rounded-2xl" style={{ background: C.page }}>
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h2 className="f-display text-xl" style={{ fontWeight: 600 }}>{recipe.name || 'Ohne Titel'}</h2>
+              {recipe.category && (
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>{recipe.category}</span>
+              )}
+            </div>
+            <button onClick={onClose} style={{ color: C.inkSoft }}><X size={20} /></button>
+          </div>
+
+          <RecipePhotoThumb id={recipe.id} hasPhoto={recipe.hasPhoto} wide />
+
+          <div className="flex items-center gap-3 mt-3 text-xs f-mono flex-wrap" style={{ color: C.inkSoft }}>
+            <span>{servings} Portionen</span>
+            {totals.kcal > 0 && <span>{Math.round(totals.kcal / servings)} kcal/Port.</span>}
+            {totals.protein > 0 && <span>{Math.round(totals.protein / servings)}g Eiw.</span>}
+            {totals.fiber > 0 && <span>{Math.round((totals.fiber / servings) * 10) / 10}g BS</span>}
+            {plantCount > 0 && <span className="flex items-center gap-1" style={{ color: C.leaf }}><Leaf size={12} />{plantCount}</span>}
+          </div>
+
+          <div className="mt-4">
+            <div className="text-xs f-mono mb-1.5" style={{ color: C.inkSoft }}>Zutaten</div>
+            <div className="rounded-xl overflow-hidden" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+              {recipe.ingredients.filter(i => i.name.trim()).map((i, idx) => (
+                <div key={i.id || idx} className="flex items-center gap-2 px-3 py-2 text-sm"
+                  style={{ borderTop: idx > 0 ? `1px solid ${C.line}` : 'none' }}>
+                  {i.isPlant && <Leaf size={12} style={{ color: C.leaf }} className="shrink-0" />}
+                  <span className="flex-1">{i.name}</span>
+                  <span className="f-mono text-xs" style={{ color: C.inkSoft }}>{i.amount} {i.unit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {recipe.instructions && (
+            <div className="mt-4">
+              <div className="text-xs f-mono mb-1.5" style={{ color: C.inkSoft }}>Zubereitung</div>
+              <p className="text-sm whitespace-pre-wrap" style={{ color: C.ink }}>{recipe.instructions}</p>
+            </div>
+          )}
+
+          <div className="mt-5">
+            {showAssign ? (
+              <div className="rounded-xl p-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+                {assigned ? (
+                  <p className="text-sm text-center py-1" style={{ color: C.leaf }}>Zum Wochenplan hinzugefügt ✓</p>
+                ) : (
+                  <>
+                    <div className="flex gap-2 mb-2">
+                      <select value={day} onChange={e => setDay(e.target.value)} className="flex-1 px-2 py-1.5 rounded-lg text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }}>
+                        {DAYS.map((d, i) => <option key={d} value={DAYS_SHORT[i]}>{d}</option>)}
+                      </select>
+                      <select value={meal} onChange={e => setMeal(e.target.value)} className="flex-1 px-2 py-1.5 rounded-lg text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }}>
+                        {MEALS.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setShowAssign(false)} className="flex-1 py-1.5 rounded-full text-sm" style={{ border: `1px solid ${C.line}`, color: C.inkSoft }}>Abbrechen</button>
+                      <button onClick={confirmAssign} className="flex-1 py-1.5 rounded-full text-sm" style={{ background: C.leaf, color: '#fff' }}>Eintragen</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <button onClick={() => setShowAssign(true)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-full text-sm" style={{ background: C.leafSoft, color: C.leaf }}>
+                <CalendarDays size={15} /> Zum Wochenplan hinzufügen
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => onEdit(recipe)} className="flex-1 py-2 rounded-full text-sm flex items-center justify-center gap-1.5" style={{ border: `1px solid ${C.line}`, color: C.ink }}>
+              <Pencil size={14} /> Bearbeiten
+            </button>
+            <button onClick={() => onDelete(recipe.id)} className="flex-1 py-2 rounded-full text-sm flex items-center justify-center gap-1.5" style={{ border: `1px solid ${C.line}`, color: C.accent }}>
+              <Trash2 size={14} /> Löschen
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -900,12 +1025,90 @@ function IngredientRow({ ing, onChange, onRemove, foodLibrary }) {
   );
 }
 
+function IngredientCompactRow({ ing, onExpand }) {
+  return (
+    <button type="button" onClick={onExpand} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left"
+      style={{ background: C.card, border: `1px solid ${C.line}` }}>
+      {ing.isPlant && <Leaf size={11} style={{ color: CATEGORY_META[ing.cat]?.color || C.leaf }} className="shrink-0" />}
+      <span className="flex-1 text-sm truncate">{ing.name}</span>
+      <span className="text-xs f-mono shrink-0" style={{ color: C.inkSoft }}>{ing.amount} {ing.unit}</span>
+    </button>
+  );
+}
+
+function IngredientQuickAdd({ foodLibrary, onAdd }) {
+  const [name, setName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState('g');
+  const [matched, setMatched] = useState(null);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const q = name.trim().toLowerCase();
+  const suggestions = q.length > 0 ? foodLibrary.filter(p => p.name.toLowerCase().includes(q)).slice(0, 6) : [];
+  function pick(p) {
+    setName(p.name);
+    setMatched(p);
+    setShowSuggest(false);
+  }
+  function submit() {
+    if (!name.trim()) return;
+    onAdd({
+      ...EMPTY_ING(), name: name.trim(), amount, unit,
+      isPlant: matched ? matched.isPlant : false,
+      cat: matched ? matched.cat : undefined,
+      quarter: matched ? matched.quarter : false,
+      perHundred: matched ? matched.perHundred : null,
+    });
+    setName(''); setAmount(''); setMatched(null);
+  }
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: C.leafSoft, border: `1px solid ${C.line}` }}>
+      <div className="flex gap-2">
+        <div className="flex-1 min-w-0 relative">
+          <input value={name}
+            onChange={e => { setName(e.target.value); setMatched(null); setShowSuggest(true); }}
+            onFocus={() => setShowSuggest(true)}
+            onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
+            placeholder="Nächste Zutat …" className="w-full px-2 py-1.5 rounded text-sm"
+            style={{ background: C.page, border: `1px solid ${C.line}` }} />
+          {showSuggest && suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 mt-1 rounded-lg overflow-hidden z-10 scroll-thin" style={{ background: C.card, border: `1px solid ${C.line}`, maxHeight: 220, overflowY: 'auto' }}>
+              {suggestions.map(p => (
+                <button key={p.name} type="button" onMouseDown={() => pick(p)} className="w-full text-left px-2.5 py-1.5 text-sm flex items-center gap-2">
+                  <span className="inline-block rounded-full shrink-0" style={{ width: 7, height: 7, background: CATEGORY_META[p.cat].color }} />
+                  {p.name}{p.quarter ? ' · ¼' : ''}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <input value={amount} onChange={e => setAmount(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }} placeholder="Menge"
+          className="w-16 px-2 py-1.5 rounded text-sm f-mono" style={{ background: C.page, border: `1px solid ${C.line}` }} />
+        <select value={unit} onChange={e => setUnit(e.target.value)} className="w-20 px-1 py-1.5 rounded text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }}>
+          {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+        </select>
+        <button type="button" onClick={submit} disabled={!name.trim()} className="p-2 rounded-lg shrink-0" style={{ background: name.trim() ? C.leaf : C.line, color: '#fff' }}>
+          <Plus size={16} />
+        </button>
+      </div>
+      {matched && (
+        <div className="mt-1.5 text-xs f-mono" style={{ color: C.leaf }}>
+          erkannt: {CATEGORY_META[matched.cat]?.label || matched.cat}{matched.isPlant && matched.quarter ? ' · ¼ Punkt' : ''}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RecipeEditor({ draft, onChange, onCancel, onSave, foodLibrary }) {
+  const [expandedIngId, setExpandedIngId] = useState(null);
   function updateIngFull(id, updated) {
     onChange({ ...draft, ingredients: draft.ingredients.map(i => (i.id === id ? { ...updated, id } : i)) });
   }
-  function addIng() {
-    onChange({ ...draft, ingredients: [...draft.ingredients, EMPTY_ING()] });
+  function addIng(ing) {
+    onChange({ ...draft, ingredients: [...draft.ingredients, ing] });
+    setExpandedIngId(null);
   }
   function removeIng(id) {
     onChange({ ...draft, ingredients: draft.ingredients.filter(i => i.id !== id) });
@@ -962,16 +1165,22 @@ function RecipeEditor({ draft, onChange, onCancel, onSave, foodLibrary }) {
           </label>
         )}
 
-        <div className="flex items-center justify-between mt-4 mb-2">
+        <div className="mt-4 mb-2">
           <span className="text-xs f-mono" style={{ color: C.inkSoft }}>Zutaten</span>
-          <button onClick={addIng} className="flex items-center gap-1 text-xs px-2 py-1 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>
-            <Plus size={12} /> Zutat
-          </button>
         </div>
+        <IngredientQuickAdd foodLibrary={foodLibrary} onAdd={addIng} />
 
-        <div className="space-y-2">
+        <div className="space-y-1.5 mt-2">
           {draft.ingredients.map(ing => (
-            <IngredientRow key={ing.id} ing={ing} onChange={updated => updateIngFull(ing.id, updated)} onRemove={() => removeIng(ing.id)} foodLibrary={foodLibrary} />
+            expandedIngId === ing.id ? (
+              <div key={ing.id}>
+                <IngredientRow ing={ing} onChange={updated => updateIngFull(ing.id, updated)}
+                  onRemove={() => { removeIng(ing.id); setExpandedIngId(null); }} foodLibrary={foodLibrary} />
+                <button type="button" onClick={() => setExpandedIngId(null)} className="mt-1 text-xs" style={{ color: C.leaf }}>fertig, einklappen ✓</button>
+              </div>
+            ) : (
+              <IngredientCompactRow key={ing.id} ing={ing} onExpand={() => setExpandedIngId(ing.id)} />
+            )
           ))}
         </div>
 
@@ -1013,13 +1222,62 @@ function ConfirmModal({ text, onCancel, onConfirm }) {
   );
 }
 
+function MealSlotInput({ value, recipes, onChange }) {
+  const matchedRecipe = recipes.find(r => r.id === value);
+  const [text, setText] = useState(matchedRecipe ? matchedRecipe.name : (value || ''));
+  const [showSuggest, setShowSuggest] = useState(false);
+  const justPicked = useRef(false);
+  useEffect(() => {
+    const m = recipes.find(r => r.id === value);
+    setText(m ? m.name : (value || ''));
+  }, [value]);
+  const q = text.trim().toLowerCase();
+  const suggestions = (q.length > 0 ? recipes.filter(r => r.name.toLowerCase().includes(q)) : recipes).slice(0, 6);
+  function pick(r) {
+    justPicked.current = true;
+    onChange(r.id);
+    setText(r.name);
+    setShowSuggest(false);
+  }
+  function commit() {
+    const exact = recipes.find(r => r.name.toLowerCase() === text.trim().toLowerCase());
+    onChange(exact ? exact.id : text.trim());
+  }
+  function handleBlur() {
+    setTimeout(() => {
+      setShowSuggest(false);
+      if (justPicked.current) { justPicked.current = false; return; }
+      commit();
+    }, 150);
+  }
+  return (
+    <div className="relative flex-1 min-w-0">
+      <div className="flex items-center gap-1">
+        <input value={text}
+          onChange={e => { setText(e.target.value); setShowSuggest(true); }}
+          onFocus={() => setShowSuggest(true)}
+          onBlur={handleBlur}
+          placeholder="Rezept oder eigener Text …"
+          className="flex-1 min-w-0 px-2 py-1.5 rounded-lg text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }} />
+        {text && (
+          <button type="button" onMouseDown={() => { justPicked.current = true; setText(''); onChange(''); }} style={{ color: C.inkSoft }}><X size={14} /></button>
+        )}
+      </div>
+      {showSuggest && suggestions.length > 0 && (
+        <div className="absolute left-0 right-0 mt-1 rounded-lg overflow-hidden z-10 scroll-thin" style={{ background: C.card, border: `1px solid ${C.line}`, maxHeight: 200, overflowY: 'auto' }}>
+          {suggestions.map(r => (
+            <button key={r.id} type="button" onMouseDown={() => pick(r)} className="w-full text-left px-2.5 py-1.5 text-sm">{r.name}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, weekAssignments, onAssign, templates, onSaveTemplate, onApplyTemplate, onDeleteTemplate }) {
   const [showSave, setShowSave] = useState(false);
   const [showList, setShowList] = useState(false);
   const [name, setName] = useState('');
-  if (recipes.length === 0) {
-    return <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>Legt zuerst ein paar Rezepte an, dann könnt ihr sie hier einplanen.</p>;
-  }
   function submitSave() {
     if (!name.trim()) return;
     onSaveTemplate(name);
@@ -1030,35 +1288,8 @@ function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, week
     <div>
       <WeekNav monday={monday} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
 
-      <div className="flex gap-2 mb-3">
-        <button onClick={() => { setShowSave(s => !s); setShowList(false); }} className="flex-1 py-2 rounded-full text-sm" style={{ background: C.ink, color: C.page }}>
-          Als Vorlage speichern
-        </button>
-        <button onClick={() => { setShowList(s => !s); setShowSave(false); }} className="flex-1 py-2 rounded-full text-sm" style={{ border: `1px solid ${C.line}`, color: C.ink }}>
-          Vorlage anwenden{templates.length > 0 ? ` (${templates.length})` : ''}
-        </button>
-      </div>
-
-      {showSave && (
-        <div className="rounded-xl p-3 mb-3 flex gap-2" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Name, z. B. Standardwoche"
-            className="flex-1 min-w-0 px-2 py-1.5 rounded text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }} autoFocus />
-          <button onClick={submitSave} disabled={!name.trim()} className="px-3 py-1.5 rounded-full text-sm shrink-0" style={{ background: name.trim() ? C.ink : C.line, color: C.page }}>Speichern</button>
-        </div>
-      )}
-
-      {showList && (
-        <div className="rounded-xl overflow-hidden mb-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
-          {templates.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: C.inkSoft }}>Noch keine Vorlage gespeichert.</p>
-          ) : templates.map((t, i) => (
-            <div key={t.id} className="flex items-center gap-2 px-4 py-3" style={{ borderTop: i > 0 ? `1px solid ${C.line}` : 'none' }}>
-              <span className="flex-1 text-sm">{t.name}</span>
-              <button onClick={() => { onApplyTemplate(t.id); setShowList(false); }} className="text-xs px-2.5 py-1 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>anwenden</button>
-              <button onClick={() => onDeleteTemplate(t.id)} style={{ color: C.accent }}><Trash2 size={14} /></button>
-            </div>
-          ))}
-        </div>
+      {recipes.length === 0 && (
+        <p className="text-sm text-center mb-3" style={{ color: C.inkSoft }}>Noch keine Rezepte im Buch – ihr könnt hier trotzdem schon eigenen Text eintragen.</p>
       )}
 
       <div className="space-y-2">
@@ -1089,15 +1320,11 @@ function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, week
                 {MEALS.map(meal => (
                   <div key={meal} className="flex items-center gap-2">
                     <span className="text-xs w-20 shrink-0 f-mono" style={{ color: C.inkSoft }}>{meal}</span>
-                    <select
+                    <MealSlotInput
                       value={weekAssignments[DAYS_SHORT[idx]]?.[meal] || ''}
-                      onChange={e => onAssign(DAYS_SHORT[idx], meal, e.target.value)}
-                      className="flex-1 px-2 py-1.5 rounded-lg text-sm min-w-0"
-                      style={{ background: C.page, border: `1px solid ${C.line}` }}
-                    >
-                      <option value="">—</option>
-                      {recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
+                      recipes={recipes}
+                      onChange={v => onAssign(DAYS_SHORT[idx], meal, v)}
+                    />
                   </div>
                 ))}
               </div>
@@ -1105,6 +1332,37 @@ function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, week
           );
         })}
       </div>
+
+      <div className="flex gap-2 mt-4 mb-3">
+        <button onClick={() => { setShowSave(s => !s); setShowList(false); }} className="flex-1 py-2 rounded-full text-sm" style={{ background: C.ink, color: C.page }}>
+          Als Vorlage speichern
+        </button>
+        <button onClick={() => { setShowList(s => !s); setShowSave(false); }} className="flex-1 py-2 rounded-full text-sm" style={{ border: `1px solid ${C.line}`, color: C.ink }}>
+          Vorlage anwenden{templates.length > 0 ? ` (${templates.length})` : ''}
+        </button>
+      </div>
+
+      {showSave && (
+        <div className="rounded-xl p-3 mb-3 flex gap-2" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Name, z. B. Standardwoche"
+            className="flex-1 min-w-0 px-2 py-1.5 rounded text-sm" style={{ background: C.page, border: `1px solid ${C.line}` }} autoFocus />
+          <button onClick={submitSave} disabled={!name.trim()} className="px-3 py-1.5 rounded-full text-sm shrink-0" style={{ background: name.trim() ? C.ink : C.line, color: C.page }}>Speichern</button>
+        </div>
+      )}
+
+      {showList && (
+        <div className="rounded-xl overflow-hidden mb-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+          {templates.length === 0 ? (
+            <p className="text-sm text-center py-6" style={{ color: C.inkSoft }}>Noch keine Vorlage gespeichert.</p>
+          ) : templates.map((t, i) => (
+            <div key={t.id} className="flex items-center gap-2 px-4 py-3" style={{ borderTop: i > 0 ? `1px solid ${C.line}` : 'none' }}>
+              <span className="flex-1 text-sm">{t.name}</span>
+              <button onClick={() => { onApplyTemplate(t.id); setShowList(false); }} className="text-xs px-2.5 py-1 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>anwenden</button>
+              <button onClick={() => onDeleteTemplate(t.id)} style={{ color: C.accent }}><Trash2 size={14} /></button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
