@@ -23,6 +23,7 @@ const Pencil = (p) => <IconBase {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.
 const Search = (p) => <IconBase {...p}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconBase>;
 const Camera = (p) => <IconBase {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></IconBase>;
 const ClipboardList = (p) => <IconBase {...p}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="15" y2="15"/></IconBase>;
+const Star = (p) => <IconBase {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
 
 const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 const DAYS_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -44,6 +45,7 @@ const CATEGORY_META = {
   fleisch: { label: 'Fleisch & Wurst', color: '#9C4A3A' },
   fisch: { label: 'Fisch & Meeresfrüchte', color: '#4A7A93' },
   eier: { label: 'Eier', color: '#D9B54A' },
+  backwaren: { label: 'Backwaren', color: '#C97B4A' },
 };
 const CATEGORY_ORDER = ['gemuese', 'obst', 'huelsen', 'getreide', 'nuesse', 'pilze', 'extras', 'sonstige'];
 
@@ -136,7 +138,81 @@ const RAW_FOODS = [
   ['Buchweizen (roh)', 'getreide', 1, 0, 343, 13, 3.4, 71, 10], ['Brauner Reis (roh)', 'getreide', 1, 0, 370, 7.5, 2.7, 77, 3.5],
   ['Hirse (roh)', 'getreide', 1, 0, 378, 11, 4.2, 73, 8.5], ['Bulgur (roh)', 'getreide', 1, 0, 342, 12, 1.3, 76, 18],
   ['Polenta (roh)', 'getreide', 1, 0, 361, 8.5, 1.5, 77, 5.5], ['Gerste (roh)', 'getreide', 1, 0, 354, 9.9, 2.3, 73, 15],
-  ['Dinkel (roh)', 'getreide', 1, 0, 338, 15, 2.4, 70, 11],
+  ['Dinkel (roh)', 'getreide', 1, 0, 338, 15, 2.4, 70, 11], ['Nudeln (Hartweizen)', 'getreide', 1, 0, 371, 13, 1.5, 75, 3],
+  ['Vollkornnudeln', 'getreide', 1, 0, 348, 14, 2.5, 66, 9], ['Reisnudeln', 'getreide', 1, 0, 360, 6, 0.5, 80, 1.5],
+  ['Glasnudeln', 'getreide', 1, 0, 351, 0.5, 0.2, 84, 1], ['Couscous', 'getreide', 1, 0, 376, 12.8, 0.6, 77, 5],
+  ['Vollkorn-Couscous', 'getreide', 1, 0, 355, 13, 2.5, 72, 8], ['Weizenmehl Type 405', 'getreide', 1, 0, 342, 10, 1, 70, 3],
+  ['Maisstärke', 'getreide', 1, 0, 353, 0.5, 0.1, 87, 1], ['Paniermehl', 'getreide', 1, 0, 395, 13, 3, 72, 4.5],
+  ['Haferkleie', 'getreide', 1, 0, 246, 17, 7, 66, 15], ['Weizenkleie', 'getreide', 1, 0, 216, 15, 4.8, 64, 43],
+  ['Hartweizengrieß', 'getreide', 1, 0, 358, 12.7, 1.1, 72, 3.9], ['Lasagneplatten', 'getreide', 1, 0, 371, 13, 1.5, 75, 3],
+  ['Spätzle', 'getreide', 1, 0, 291, 10, 4.5, 52, 2], ['Perlgraupen', 'getreide', 1, 0, 352, 9.9, 2.3, 73, 15],
+  ['Tomatenmark', 'gemuese', 1, 0, 82, 4.3, 0.5, 15, 4], ['Passierte Tomaten', 'gemuese', 1, 0, 32, 1.6, 0.3, 5, 1.5],
+  ['Gehackte Tomaten (Dose)', 'gemuese', 1, 0, 24, 1.2, 0.3, 4, 1.2], ['Sonnengetrocknete Tomaten', 'gemuese', 1, 0, 258, 14, 3, 56, 12],
+  ['Kapern', 'gemuese', 1, 0, 23, 2.4, 0.9, 4.9, 3.2], ['Oliven (grün)', 'gemuese', 1, 0, 145, 1, 15, 4, 3.3],
+  ['Oliven (schwarz)', 'gemuese', 1, 0, 115, 0.8, 11, 6, 2.6], ['Peperoni (eingelegt)', 'gemuese', 1, 0, 20, 0.9, 0.4, 4, 2],
+  ['Kokosmilch', 'obst', 1, 0, 197, 2.3, 21, 3, 2], ['Kokosraspeln', 'obst', 1, 0, 592, 6.9, 57, 24, 16],
+  ['Kokosöl', 'obst', 1, 0, 862, 0, 100, 0, 0], ['Kokosmehl', 'obst', 1, 0, 400, 20, 13, 60, 39],
+  ['Hafermilch', 'getreide', 1, 0, 45, 1, 1.5, 7, 0.8], ['Mandelmilch', 'nuesse', 1, 0, 24, 0.6, 1.5, 2.5, 0.3],
+  ['Sojamilch', 'huelsen', 1, 0, 33, 3.3, 1.8, 1, 0.6], ['Reismilch', 'getreide', 1, 0, 47, 0.3, 1, 9, 0.1],
+  ['Erdnussbutter', 'huelsen', 1, 0, 588, 25, 50, 20, 6], ['Mandelmus', 'nuesse', 1, 0, 614, 21, 56, 19, 10],
+  ['Tahini (Sesammus)', 'nuesse', 1, 0, 595, 17, 54, 21, 9], ['Miso-Paste', 'huelsen', 1, 0, 199, 12.8, 6, 26, 5.4],
+  ['Kichererbsenmehl', 'huelsen', 1, 0, 387, 22, 6.7, 58, 11], ['Buchweizenmehl', 'getreide', 1, 0, 335, 13, 3.1, 70, 10],
+  ['Mandelmehl', 'nuesse', 1, 0, 371, 32, 15, 21, 11], ['Currypulver', 'extras', 1, 1, 325, 14, 14, 58, 33],
+  ['Muskatnuss', 'extras', 1, 1, 525, 6, 36, 49, 21], ['Nelken', 'extras', 1, 1, 274, 6, 13, 65, 34],
+  ['Kardamom', 'extras', 1, 1, 311, 11, 7, 68, 28], ['Sternanis', 'extras', 1, 1, 337, 18, 16, 50, 15],
+  ['Vanille (Schote)', 'extras', 1, 1, 288, 0.1, 0.1, 13, 13], ['Senfkörner', 'extras', 1, 1, 508, 26, 36, 28, 12],
+  ['Fenchelsamen', 'extras', 1, 1, 345, 16, 15, 52, 40], ['Lorbeerblatt', 'extras', 1, 1, 313, 7.6, 8.4, 75, 26],
+  ['Cayennepfeffer', 'extras', 1, 1, 318, 12, 17, 57, 27], ['Sumach', 'extras', 1, 1, 300, 4, 7, 55, 25],
+  ['Piment', 'extras', 1, 1, 263, 6.1, 8.7, 72, 21], ['Sojasauce', 'extras', 1, 1, 53, 8, 0.1, 4.9, 0.8],
+  ['Ketjap Manis', 'extras', 1, 1, 130, 3, 0.1, 29, 0.5], ['Sriracha', 'extras', 1, 1, 93, 2, 0.9, 19, 1],
+  ['Senf', 'extras', 1, 1, 66, 4.4, 3.3, 5, 3.3], ['Ahornsirup', 'extras', 1, 1, 260, 0, 0.2, 67, 0],
+  ['Apfelessig', 'extras', 1, 1, 21, 0, 0, 0.9, 0], ['Balsamico-Essig', 'extras', 1, 1, 88, 0.5, 0, 17, 0],
+  ['Weißweinessig', 'extras', 1, 1, 19, 0, 0, 0.3, 0], ['Ketchup', 'sonstige', 0, 0, 112, 1.7, 0.2, 26, 0.6],
+  ['Mayonnaise', 'sonstige', 0, 0, 680, 1, 75, 3, 0], ['Honig', 'sonstige', 0, 0, 304, 0.3, 0, 82, 0.2],
+  ['Zucker (weiß)', 'sonstige', 0, 0, 400, 0, 0, 100, 0], ['Brauner Zucker', 'sonstige', 0, 0, 380, 0, 0, 98, 0],
+  ['Puderzucker', 'sonstige', 0, 0, 389, 0, 0, 99.7, 0], ['Vanillezucker', 'sonstige', 0, 0, 394, 0.1, 0.1, 98, 0],
+  ['Salz', 'sonstige', 0, 0, 0, 0, 0, 0, 0], ['Backpulver', 'sonstige', 0, 0, 53, 0, 0, 28, 0],
+  ['Natron', 'sonstige', 0, 0, 0, 0, 0, 0, 0], ['Trockenhefe', 'sonstige', 0, 0, 325, 40, 7, 36, 27],
+  ['Frischhefe', 'sonstige', 0, 0, 105, 12, 0.4, 11, 7], ['Gemüsebrühe (Pulver)', 'sonstige', 0, 0, 235, 10, 2, 45, 3],
+  ['Hühnerbrühe (Pulver)', 'sonstige', 0, 0, 250, 12, 8, 35, 1], ['Rinderbrühe (Pulver)', 'sonstige', 0, 0, 245, 14, 7, 32, 1],
+  ['Worcestersauce', 'sonstige', 0, 0, 78, 0, 0, 19, 0], ['Speisestärke', 'sonstige', 0, 0, 348, 0.6, 0.1, 86, 0.5],
+  ['Mohn', 'nuesse', 1, 0, 525, 18, 42, 28, 20], ['Hanfsamen', 'nuesse', 1, 0, 553, 31, 49, 9, 4],
+  ['Chicorée', 'gemuese', 1, 0, 17, 1, 0.2, 3, 3], ['Endiviensalat', 'gemuese', 1, 0, 17, 1.7, 0.2, 2.9, 2.2],
+  ['Eisbergsalat', 'gemuese', 1, 0, 14, 0.9, 0.1, 2.1, 1.2], ['Romana-Salat', 'gemuese', 1, 0, 17, 1.2, 0.3, 3.3, 2.1],
+  ['Portulak', 'gemuese', 1, 0, 20, 2, 0.4, 3.4, 1], ['Topinambur', 'gemuese', 1, 0, 73, 2, 0.4, 17, 1.6],
+  ['Steckrübe', 'gemuese', 1, 0, 38, 1.2, 0.2, 8.6, 2.3], ['Schwarzwurzel', 'gemuese', 1, 0, 82, 3.3, 0.5, 17, 3.3],
+  ['Mairübchen', 'gemuese', 1, 0, 28, 1, 0.1, 6, 1.7], ['Zuckerschoten', 'gemuese', 1, 0, 42, 2.8, 0.2, 7.5, 2.6],
+  ['Grüne Bohnen', 'gemuese', 1, 0, 31, 1.8, 0.2, 7, 3.4], ['Dicke Bohnen', 'gemuese', 1, 0, 88, 7.9, 0.7, 14, 5.4],
+  ['Pak Choi', 'gemuese', 1, 0, 13, 1.5, 0.2, 2.2, 1], ['Chinakohl', 'gemuese', 1, 0, 16, 1.2, 0.2, 3.2, 1.2],
+  ['Staudensellerie', 'gemuese', 1, 0, 16, 0.7, 0.2, 3, 1.6], ['Frühlingszwiebel', 'gemuese', 1, 0, 32, 1.8, 0.2, 7.3, 2.6],
+  ['Jalapeños (eingelegt)', 'gemuese', 1, 0, 22, 0.9, 0.7, 4.3, 2.5], ['Rhabarber', 'gemuese', 1, 0, 21, 0.9, 0.2, 4.5, 1.8],
+  ['Wasserkastanien', 'gemuese', 1, 0, 97, 1.4, 0.1, 24, 3], ['Bambussprossen', 'gemuese', 1, 0, 27, 2.6, 0.3, 5.2, 2.2],
+  ['Physalis', 'obst', 1, 0, 53, 1.9, 0.7, 11, 4.9], ['Litschi', 'obst', 1, 0, 66, 0.8, 0.4, 17, 1.3],
+  ['Sternfrucht', 'obst', 1, 0, 31, 1, 0.3, 6.7, 2.8], ['Guave', 'obst', 1, 0, 68, 2.6, 1, 14, 5.4],
+  ['Passionsfrucht', 'obst', 1, 0, 97, 2.2, 0.7, 23, 10.4], ['Nashi-Birne', 'obst', 1, 0, 42, 0.5, 0.2, 10, 3.6],
+  ['Quitte', 'obst', 1, 0, 57, 0.4, 0.1, 15, 1.9], ['Holunderbeeren', 'obst', 1, 0, 73, 0.7, 0.5, 18, 7],
+  ['Preiselbeeren', 'obst', 1, 0, 46, 0.4, 0.1, 12, 4.6], ['Dattel (getrocknet)', 'obst', 1, 0, 277, 1.8, 0.2, 75, 7],
+  ['Kaki', 'obst', 1, 0, 70, 0.6, 0.2, 18, 3.6], ['Mirabelle', 'obst', 1, 0, 51, 0.7, 0.3, 12, 1.5],
+  ['Dörraprikosen', 'obst', 1, 0, 241, 3.4, 0.5, 63, 7.3], ['Rosinen', 'obst', 1, 0, 299, 3.1, 0.5, 79, 3.7],
+  ['Morchel', 'pilze', 1, 0, 31, 3.1, 0.6, 4.3, 3], ['Enoki', 'pilze', 1, 0, 37, 2.7, 0.3, 7.8, 2.7],
+  ['Portobello', 'pilze', 1, 0, 22, 2.5, 0.3, 3.9, 1.3], ['Kaffeesahne', 'milch', 0, 0, 130, 3, 10, 4, 0],
+  ['Kondensmilch', 'milch', 0, 0, 135, 7, 7.5, 10, 0], ['Ricotta', 'milch', 0, 0, 174, 11, 13, 3, 0],
+  ['Halloumi', 'milch', 0, 0, 321, 22, 25, 2, 0], ['Schmand', 'milch', 0, 0, 189, 3, 20, 3.5, 0],
+  ['Saure Sahne', 'milch', 0, 0, 138, 3, 10, 3.5, 0], ['Cheddar', 'milch', 0, 0, 404, 25, 33, 1.3, 0],
+  ['Emmentaler', 'milch', 0, 0, 380, 29, 29, 0, 0], ['Hackfleisch gemischt', 'fleisch', 0, 0, 254, 17, 20, 0, 0],
+  ['Wiener Würstchen', 'fleisch', 0, 0, 290, 11, 26, 1, 0], ['Bratwurst', 'fleisch', 0, 0, 300, 13, 27, 1, 0],
+  ['Hähnchenschenkel', 'fleisch', 0, 0, 215, 18, 15, 0, 0], ['Putenhack', 'fleisch', 0, 0, 140, 20, 6, 0, 0],
+  ['Sardinen (Dose, in Öl)', 'fisch', 0, 0, 208, 25, 11, 0, 0], ['Thunfisch (Dose, in Öl)', 'fisch', 0, 0, 189, 25, 9, 0, 0],
+  ['Toastbrot', 'backwaren', 0, 0, 250, 8, 3.5, 45, 2.5], ['Vollkorn-Toastbrot', 'backwaren', 0, 0, 220, 9, 3, 38, 7],
+  ['Baguette', 'backwaren', 0, 0, 270, 9, 1.5, 54, 2.5], ['Ciabatta', 'backwaren', 0, 0, 271, 9, 3, 52, 2.7],
+  ['Brötchen', 'backwaren', 0, 0, 275, 8.5, 1.5, 54, 3], ['Pizzateig', 'backwaren', 0, 0, 271, 9, 3, 52, 2.5],
+  ['Blätterteig', 'backwaren', 0, 0, 425, 6, 28, 37, 1.5], ['Filoteig', 'backwaren', 0, 0, 290, 8, 3, 57, 2],
+  ['Tortilla-Wraps', 'backwaren', 0, 0, 310, 9, 7, 52, 3], ['Laugenbrezel', 'backwaren', 0, 0, 280, 9, 2, 55, 2.5],
+  ['Naan-Brot', 'backwaren', 0, 0, 310, 9, 6, 54, 2.2], ['Pumpernickel', 'backwaren', 0, 0, 219, 6.8, 1, 43, 8.5],
+  ['Knäckebrot', 'backwaren', 0, 0, 355, 10, 1.5, 70, 13], ['Zwieback', 'backwaren', 0, 0, 386, 10, 6, 72, 3.5],
+  ['TK-Erbsen', 'gemuese', 1, 0, 66, 5, 0.4, 10, 5], ['TK-Spinat', 'gemuese', 1, 0, 20, 2.6, 0.3, 1.8, 2.5],
+  ['TK-Beerenmischung', 'obst', 1, 0, 45, 0.8, 0.4, 10, 3], ['TK-Pommes Frites', 'sonstige', 0, 0, 155, 2.6, 5, 25, 2.3],
+  ['Fischstäbchen', 'fisch', 0, 0, 210, 12, 11, 17, 0.8], ['TK-Pizza', 'sonstige', 0, 0, 250, 10, 10, 30, 2],
 ];
 const FOOD_LIBRARY = RAW_FOODS.map(([name, cat, isPlant, quarter, kcal, protein, fat, carbs, fiber]) => ({
   name, cat, isPlant: !!isPlant, quarter: !!quarter, perHundred: { kcal, protein, fat, carbs, fiber },
@@ -159,17 +235,33 @@ function ingredientNutrients(ing) {
   return { kcal: num(ing.kcal), protein: num(ing.protein), fat: num(ing.fat), carbs: num(ing.carbs), fiber: num(ing.fiber), computed: false };
 }
 const STORE_SECTIONS = ['Obst/Gemüse', 'Kühlregal', 'TK', 'Nicht-gekühlte Sachen', 'Backwaren'];
-const SECTION_OVERRIDE = { tofu: 'Kühlregal', tempeh: 'Kühlregal', edamame: 'TK' };
+const SECTION_OVERRIDE = {
+  tofu: 'Kühlregal', tempeh: 'Kühlregal', edamame: 'TK', 'miso-paste': 'Kühlregal',
+  'tk-erbsen': 'TK', 'tk-spinat': 'TK', 'tk-beerenmischung': 'TK', 'tk-pommes frites': 'TK',
+  'fischstäbchen': 'TK', 'tk-pizza': 'TK',
+  'kokosmilch': 'Nicht-gekühlte Sachen', 'kokosraspeln': 'Nicht-gekühlte Sachen', 'kokosöl': 'Nicht-gekühlte Sachen',
+  'kokosmehl': 'Nicht-gekühlte Sachen', 'tomatenmark': 'Nicht-gekühlte Sachen', 'passierte tomaten': 'Nicht-gekühlte Sachen',
+  'gehackte tomaten (dose)': 'Nicht-gekühlte Sachen', 'sonnengetrocknete tomaten': 'Nicht-gekühlte Sachen',
+  'kapern': 'Nicht-gekühlte Sachen', 'oliven (grün)': 'Nicht-gekühlte Sachen', 'oliven (schwarz)': 'Nicht-gekühlte Sachen',
+  'peperoni (eingelegt)': 'Nicht-gekühlte Sachen', 'jalapeños (eingelegt)': 'Nicht-gekühlte Sachen',
+  'wasserkastanien': 'Nicht-gekühlte Sachen', 'bambussprossen': 'Nicht-gekühlte Sachen',
+  'rosinen': 'Nicht-gekühlte Sachen', 'dörraprikosen': 'Nicht-gekühlte Sachen', 'dattel (getrocknet)': 'Nicht-gekühlte Sachen',
+  'sardinen (dose, in öl)': 'Nicht-gekühlte Sachen', 'thunfisch (dose, in öl)': 'Nicht-gekühlte Sachen',
+};
 const CATEGORY_TO_SECTION = {
   gemuese: 'Obst/Gemüse', obst: 'Obst/Gemüse', pilze: 'Obst/Gemüse',
   milch: 'Kühlregal', eier: 'Kühlregal', fleisch: 'Kühlregal', fisch: 'Kühlregal',
   huelsen: 'Nicht-gekühlte Sachen', getreide: 'Nicht-gekühlte Sachen', nuesse: 'Nicht-gekühlte Sachen',
-  extras: 'Nicht-gekühlte Sachen', sonstige: 'Nicht-gekühlte Sachen',
+  extras: 'Nicht-gekühlte Sachen', sonstige: 'Nicht-gekühlte Sachen', backwaren: 'Backwaren',
 };
 function sectionForName(name, cat) {
   const key = (name || '').trim().toLowerCase();
   if (SECTION_OVERRIDE[key]) return SECTION_OVERRIDE[key];
   return CATEGORY_TO_SECTION[cat] || 'Nicht-gekühlte Sachen';
+}
+function slotInfo(raw) {
+  if (raw && typeof raw === 'object') return { value: raw.v || '', excluded: !!raw.ex };
+  return { value: raw || '', excluded: false };
 }
 
 function getMonday(d) {
@@ -217,8 +309,8 @@ function recipePlantsForWeek(weekKey, data, recipesById) {
   const map = new Map();
   const days = data.weekPlan[weekKey] || {};
   Object.values(days).forEach(meals => {
-    Object.values(meals || {}).forEach(rid => {
-      const r = recipesById[rid];
+    Object.values(meals || {}).forEach(raw => {
+      const r = recipesById[slotInfo(raw).value];
       if (!r) return;
       r.ingredients.forEach(ing => {
         if (ing.isPlant && ing.name.trim()) {
@@ -247,8 +339,8 @@ function pointsForMap(map) {
 }
 function plantsForDay(dayMeals, recipesById) {
   const map = new Map();
-  Object.values(dayMeals || {}).forEach(rid => {
-    const r = recipesById[rid];
+  Object.values(dayMeals || {}).forEach(raw => {
+    const r = recipesById[slotInfo(raw).value];
     if (!r) return;
     r.ingredients.forEach(ing => {
       if (ing.isPlant && ing.name.trim()) {
@@ -325,7 +417,7 @@ function getBadges(stats) {
 
 const DEFAULT_DATA = { recipes: [], weekPlan: {}, shoppingChecked: {}, plantLog: {}, shoppingExtras: {}, customPlants: [], planTemplates: [], shoppingOverrides: {} };
 const EMPTY_ING = () => ({ id: uid(), name: '', amount: '', unit: 'g', isPlant: false, cat: undefined, quarter: false, perHundred: null, kcal: '', protein: '', fat: '', carbs: '', fiber: '' });
-const EMPTY_RECIPE = () => ({ id: uid(), isNew: true, name: '', servings: 2, category: '', instructions: '', hasPhoto: false, photoDataUrl: null, removePhoto: false, ingredients: [] });
+const EMPTY_RECIPE = () => ({ id: uid(), isNew: true, name: '', servings: 2, category: '', rating: 0, instructions: '', hasPhoto: false, photoDataUrl: null, removePhoto: false, ingredients: [] });
 
 function handlePhotoFile(e, onChange, draft) {
   const file = e.target.files && e.target.files[0];
@@ -427,8 +519,8 @@ function App() {
   function assignedRecipes() {
     const ids = [];
     DAYS_SHORT.forEach(day => MEALS.forEach(meal => {
-      const rid = weekAssignments[day]?.[meal];
-      if (rid && recipesById[rid]) ids.push(rid);
+      const info = slotInfo(weekAssignments[day]?.[meal]);
+      if (info.value && !info.excluded && recipesById[info.value]) ids.push(info.value);
     }));
     return ids;
   }
@@ -479,7 +571,7 @@ function App() {
     );
   }
 
-  function saveRecipe(draft) {
+  async function saveRecipe(draft) {
     const { photoDataUrl, removePhoto, isNew, ...rest } = draft;
     const clean = { ...rest, servings: Math.max(1, num(draft.servings) || 1), ingredients: draft.ingredients.filter(i => i.name.trim()) };
     let recipes;
@@ -488,37 +580,56 @@ function App() {
     } else {
       recipes = [...data.recipes, clean];
     }
-    persist({ ...data, recipes });
     if (photoDataUrl) {
-      window.storage.set('photo:' + clean.id, photoDataUrl, true).catch(() => {});
+      try { await window.storage.set('photo:' + clean.id, photoDataUrl, true); }
+      catch (e) { console.error('Foto speichern fehlgeschlagen:', e); setError('Foto speichern fehlgeschlagen: ' + (e && e.message ? e.message : e)); }
     } else if (removePhoto) {
-      window.storage.delete('photo:' + clean.id, true).catch(() => {});
+      try { await window.storage.delete('photo:' + clean.id, true); }
+      catch (e) { console.error('Foto löschen fehlgeschlagen:', e); }
     }
+    await persist({ ...data, recipes });
     setEditing(null);
   }
 
-  function deleteRecipe(id) {
+  async function deleteRecipe(id) {
     const recipes = data.recipes.filter(r => r.id !== id);
     const weekPlan = {};
     Object.entries(data.weekPlan).forEach(([wk, days]) => {
       const nd = {};
       Object.entries(days).forEach(([day, meals]) => {
         const nm = {};
-        Object.entries(meals).forEach(([meal, rid]) => { if (rid !== id) nm[meal] = rid; });
+        Object.entries(meals).forEach(([meal, raw]) => { if (slotInfo(raw).value !== id) nm[meal] = raw; });
         nd[day] = nm;
       });
       weekPlan[wk] = nd;
     });
-    persist({ ...data, recipes, weekPlan });
-    window.storage.delete('photo:' + id, true).catch(() => {});
+    try { await window.storage.delete('photo:' + id, true); } catch (e) { console.error('Foto löschen fehlgeschlagen:', e); }
+    await persist({ ...data, recipes, weekPlan });
     setConfirmDelete(null);
   }
 
-  function assign(day, meal, recipeId) {
+  function assign(day, meal, value) {
     const wp = { ...data.weekPlan };
     const days = { ...(wp[weekKey] || {}) };
     const meals = { ...(days[day] || {}) };
-    if (recipeId) meals[meal] = recipeId; else delete meals[meal];
+    if (value) {
+      const prevExcluded = slotInfo(meals[meal]).excluded;
+      meals[meal] = { v: value, ex: prevExcluded };
+    } else {
+      delete meals[meal];
+    }
+    days[day] = meals;
+    wp[weekKey] = days;
+    persist({ ...data, weekPlan: wp });
+  }
+
+  function toggleSlotExclude(day, meal) {
+    const wp = { ...data.weekPlan };
+    const days = { ...(wp[weekKey] || {}) };
+    const meals = { ...(days[day] || {}) };
+    const cur = slotInfo(meals[meal]);
+    if (!cur.value) return;
+    meals[meal] = { v: cur.value, ex: !cur.excluded };
     days[day] = meals;
     wp[weekKey] = days;
     persist({ ...data, weekPlan: wp });
@@ -538,6 +649,12 @@ function App() {
     wk[key] = !wk[key];
     pl[weekKey] = wk;
     persist({ ...data, plantLog: pl });
+  }
+
+  function rateRecipe(id, value) {
+    const recipes = data.recipes.map(r => (r.id === id ? { ...r, rating: value } : r));
+    persist({ ...data, recipes });
+    setViewing(v => (v && v.id === id ? { ...v, rating: value } : v));
   }
 
   function addShoppingExtra(item) {
@@ -604,29 +721,9 @@ function App() {
           <span className="text-xs f-mono" style={{ color: C.inkSoft }}>{data.recipes.length} Rezepte</span>
         </div>
         <p className="text-xs mt-0.5" style={{ color: C.inkSoft }}>Meal Prepping by Johanna &amp; Kai-Lucas</p>
-
-        <nav className="flex gap-1 mt-4 overflow-x-auto scroll-thin">
-          {[
-            ['recipes', 'Rezepte', BookOpen],
-            ['plan', 'Wochenplan', CalendarDays],
-            ['shopping', 'Einkaufsliste', ShoppingCart],
-            ['points', 'PlantPoints', Leaf],
-            ['report', 'Wochenbericht', ClipboardList],
-          ].map(([key, label, Icon]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-colors"
-              style={tab === key ? { background: C.ink, color: C.page } : { background: 'transparent', color: C.inkSoft }}
-            >
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-        </nav>
       </header>
 
-      <main className="px-4 pb-28 pt-4 max-w-3xl mx-auto">
+      <main className="px-4 pb-24 pt-4 max-w-3xl mx-auto">
         {error && (
           <div className="mb-4 px-3 py-2 rounded-lg text-sm" style={{ background: C.accentSoft, color: C.accent }}>{error}</div>
         )}
@@ -650,6 +747,7 @@ function App() {
             recipesById={recipesById}
             weekAssignments={weekAssignments}
             onAssign={assign}
+            onToggleExclude={toggleSlotExclude}
             templates={data.planTemplates}
             onSaveTemplate={saveWeekTemplate}
             onApplyTemplate={applyWeekTemplate}
@@ -703,6 +801,26 @@ function App() {
         )}
       </main>
 
+      <nav className="fixed bottom-0 left-0 right-0 z-20 flex" style={{ background: C.card, borderTop: `1px solid ${C.line}`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {[
+          ['recipes', 'Rezepte', BookOpen],
+          ['plan', 'Wochenplan', CalendarDays],
+          ['shopping', 'Einkauf', ShoppingCart],
+          ['points', 'Punkte', Leaf],
+          ['report', 'Bericht', ClipboardList],
+        ].map(([key, label, Icon]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
+            style={{ color: tab === key ? C.leaf : C.inkSoft }}
+          >
+            <Icon size={20} />
+            <span style={{ fontSize: '10px' }}>{label}</span>
+          </button>
+        ))}
+      </nav>
+
       {viewing && (
         <RecipeDetail
           recipe={viewing}
@@ -710,6 +828,7 @@ function App() {
           onEdit={r => { setViewing(null); setEditing({ ...JSON.parse(JSON.stringify(r)), isNew: false, photoDataUrl: null, removePhoto: false }); }}
           onDelete={id => { setViewing(null); setConfirmDelete(id); }}
           onAssign={assign}
+          onRate={rateRecipe}
         />
       )}
 
@@ -753,6 +872,22 @@ function WeekNav({ monday, weekOffset, setWeekOffset }) {
   );
 }
 
+function StarRating({ value = 0, onChange, size = 15 }) {
+  const interactive = !!onChange;
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" disabled={!interactive}
+          onClick={e => { e.stopPropagation(); onChange(n === value ? 0 : n); }}
+          className={interactive ? 'cursor-pointer' : 'cursor-default'}
+          style={{ lineHeight: 0, color: n <= value ? C.gold : C.line, background: 'transparent' }}>
+          <Star size={size} fill={n <= value ? C.gold : 'none'} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function RecipePhotoThumb({ id, hasPhoto, size = 80, wide = false }) {
   const [src, setSrc] = useState(null);
   useEffect(() => {
@@ -774,6 +909,7 @@ function RecipePhotoThumb({ id, hasPhoto, size = 80, wide = false }) {
 }
 
 function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
+  const [filterCat, setFilterCat] = useState('');
   if (recipes.length === 0) {
     return (
       <div className="text-center py-16">
@@ -783,54 +919,77 @@ function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
       </div>
     );
   }
+  const usedCats = RECIPE_CATEGORIES.filter(c => recipes.some(r => r.category === c));
+  const filtered = filterCat ? recipes.filter(r => r.category === filterCat) : recipes;
   return (
     <div>
-      <button onClick={onAdd} className="mb-4 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm" style={{ background: C.ink, color: C.page }}>
+      <button onClick={onAdd} className="mb-3 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm" style={{ background: C.ink, color: C.page }}>
         <Plus size={15} /> Neues Rezept
       </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {recipes.map(r => {
-          const totals = r.ingredients.reduce((acc, i) => {
-            const n = ingredientNutrients(i);
-            acc.kcal += n.kcal; acc.protein += n.protein; acc.fat += n.fat; acc.carbs += n.carbs;
-            return acc;
-          }, { kcal: 0, protein: 0, fat: 0, carbs: 0 });
-          const perServing = Math.round(totals.kcal / (r.servings || 1));
-          const plantCount = new Set(r.ingredients.filter(i => i.isPlant && i.name.trim()).map(i => i.name.trim().toLowerCase())).size;
-          return (
-            <div key={r.id} onClick={() => onOpen(r)} className="rounded-xl p-3 flex gap-3 cursor-pointer items-start"
-              style={{ background: C.card, border: `1px solid ${C.line}` }}>
-              <RecipePhotoThumb id={r.id} hasPhoto={r.hasPhoto} size={72} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="f-display text-base leading-tight truncate" style={{ fontWeight: 600 }}>{r.name || 'Ohne Titel'}</h3>
-                    {r.category && (
-                      <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>{r.category}</span>
+
+      {usedCats.length > 0 && (
+        <div className="flex gap-1.5 mb-4 overflow-x-auto scroll-thin">
+          <button onClick={() => setFilterCat('')} className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0"
+            style={filterCat === '' ? { background: C.ink, color: C.page } : { border: `1px solid ${C.line}`, color: C.inkSoft }}>
+            Alle
+          </button>
+          {usedCats.map(c => (
+            <button key={c} onClick={() => setFilterCat(c)} className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap shrink-0"
+              style={filterCat === c ? { background: C.ink, color: C.page } : { border: `1px solid ${C.line}`, color: C.inkSoft }}>
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>Keine Rezepte in dieser Kategorie.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map(r => {
+            const totals = r.ingredients.reduce((acc, i) => {
+              const n = ingredientNutrients(i);
+              acc.kcal += n.kcal; acc.protein += n.protein; acc.fat += n.fat; acc.carbs += n.carbs;
+              return acc;
+            }, { kcal: 0, protein: 0, fat: 0, carbs: 0 });
+            const perServing = Math.round(totals.kcal / (r.servings || 1));
+            const plantCount = new Set(r.ingredients.filter(i => i.isPlant && i.name.trim()).map(i => i.name.trim().toLowerCase())).size;
+            return (
+              <div key={r.id} onClick={() => onOpen(r)} className="rounded-xl p-3 flex gap-3 cursor-pointer items-start"
+                style={{ background: C.card, border: `1px solid ${C.line}` }}>
+                <RecipePhotoThumb id={r.id} hasPhoto={r.hasPhoto} size={72} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="f-display text-base leading-tight truncate" style={{ fontWeight: 600 }}>{r.name || 'Ohne Titel'}</h3>
+                      {r.category && (
+                        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ background: C.leafSoft, color: C.leaf }}>{r.category}</span>
+                      )}
+                    </div>
+                    <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => onEdit(r)} className="p-1.5 rounded-full" style={{ color: C.inkSoft }}><Pencil size={14} /></button>
+                      <button onClick={() => onDelete(r.id)} className="p-1.5 rounded-full" style={{ color: C.accent }}><Trash2 size={14} /></button>
+                    </div>
+                  </div>
+                  {r.rating > 0 && <div className="mt-1"><StarRating value={r.rating} size={12} /></div>}
+                  <div className="flex items-center gap-2.5 mt-1.5 text-xs f-mono flex-wrap" style={{ color: C.inkSoft }}>
+                    <span>{r.servings} Port.</span>
+                    {totals.kcal > 0 && <span>{perServing} kcal</span>}
+                    {plantCount > 0 && (
+                      <span className="flex items-center gap-1" style={{ color: C.leaf }}><Leaf size={12} />{plantCount}</span>
                     )}
                   </div>
-                  <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => onEdit(r)} className="p-1.5 rounded-full" style={{ color: C.inkSoft }}><Pencil size={14} /></button>
-                    <button onClick={() => onDelete(r.id)} className="p-1.5 rounded-full" style={{ color: C.accent }}><Trash2 size={14} /></button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 mt-1.5 text-xs f-mono flex-wrap" style={{ color: C.inkSoft }}>
-                  <span>{r.servings} Port.</span>
-                  {totals.kcal > 0 && <span>{perServing} kcal</span>}
-                  {plantCount > 0 && (
-                    <span className="flex items-center gap-1" style={{ color: C.leaf }}><Leaf size={12} />{plantCount}</span>
-                  )}
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign }) {
+function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign, onRate }) {
   const [showAssign, setShowAssign] = useState(false);
   const [day, setDay] = useState(DAYS_SHORT[0]);
   const [meal, setMeal] = useState(MEALS[0]);
@@ -854,7 +1013,7 @@ function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign }) {
     <div className="fixed inset-0 z-20 flex items-end md:items-center justify-center" style={{ background: 'rgba(30,46,34,0.45)' }}>
       <div className="w-full md:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl md:rounded-2xl" style={{ background: C.page }}>
         <div className="p-5">
-          <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-start justify-between gap-2 mb-2">
             <div>
               <h2 className="f-display text-xl" style={{ fontWeight: 600 }}>{recipe.name || 'Ohne Titel'}</h2>
               {recipe.category && (
@@ -863,6 +1022,8 @@ function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign }) {
             </div>
             <button onClick={onClose} style={{ color: C.inkSoft }}><X size={20} /></button>
           </div>
+
+          <div className="mb-3"><StarRating value={recipe.rating || 0} onChange={v => onRate(recipe.id, v)} size={19} /></div>
 
           <RecipePhotoThumb id={recipe.id} hasPhoto={recipe.hasPhoto} wide />
 
@@ -892,6 +1053,36 @@ function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign }) {
             <div className="mt-4">
               <div className="text-xs f-mono mb-1.5" style={{ color: C.inkSoft }}>Zubereitung</div>
               <p className="text-sm whitespace-pre-wrap" style={{ color: C.ink }}>{recipe.instructions}</p>
+            </div>
+          )}
+
+          {totals.kcal > 0 && (
+            <div className="mt-4">
+              <div className="text-xs f-mono mb-1.5" style={{ color: C.inkSoft }}>Nährwerte</div>
+              <table className="w-full text-sm rounded-xl overflow-hidden" style={{ background: C.card, border: `1px solid ${C.line}`, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${C.line}` }}>
+                    <th className="text-left px-3 py-2 font-normal text-xs f-mono" style={{ color: C.inkSoft }}></th>
+                    <th className="text-right px-3 py-2 font-normal text-xs f-mono" style={{ color: C.inkSoft }}>gesamt</th>
+                    <th className="text-right px-3 py-2 font-normal text-xs f-mono" style={{ color: C.inkSoft }}>pro Portion</th>
+                  </tr>
+                </thead>
+                <tbody className="f-mono">
+                  {[
+                    ['Kalorien', totals.kcal, 'kcal', 0],
+                    ['Eiweiß', totals.protein, 'g', 1],
+                    ['Fett', totals.fat, 'g', 1],
+                    ['Kohlenhydrate', totals.carbs, 'g', 1],
+                    ['Ballaststoffe', totals.fiber, 'g', 1],
+                  ].map(([label, val, unit, dec], i) => (
+                    <tr key={label} style={{ borderTop: i > 0 ? `1px solid ${C.line}` : 'none' }}>
+                      <td className="px-3 py-1.5">{label}</td>
+                      <td className="text-right px-3 py-1.5">{(dec ? Math.round(val * 10) / 10 : Math.round(val))} {unit}</td>
+                      <td className="text-right px-3 py-1.5">{(dec ? Math.round((val / servings) * 10) / 10 : Math.round(val / servings))} {unit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
@@ -1149,6 +1340,11 @@ function RecipeEditor({ draft, onChange, onCancel, onSave, foodLibrary }) {
           </div>
         </div>
 
+        <div className="flex flex-col mb-3">
+          <label className="text-xs f-mono mb-1" style={{ color: C.inkSoft }}>Bewertung</label>
+          <StarRating value={draft.rating || 0} onChange={v => onChange({ ...draft, rating: v })} size={22} />
+        </div>
+
         <label className="text-xs f-mono block mb-1" style={{ color: C.inkSoft }}>Foto</label>
         {draft.photoDataUrl ? (
           <div className="relative mb-3">
@@ -1274,7 +1470,7 @@ function MealSlotInput({ value, recipes, onChange }) {
   );
 }
 
-function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, weekAssignments, onAssign, templates, onSaveTemplate, onApplyTemplate, onDeleteTemplate }) {
+function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, weekAssignments, onAssign, onToggleExclude, templates, onSaveTemplate, onApplyTemplate, onDeleteTemplate }) {
   const [showSave, setShowSave] = useState(false);
   const [showList, setShowList] = useState(false);
   const [name, setName] = useState('');
@@ -1296,14 +1492,14 @@ function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, week
         {DAYS.map((day, idx) => {
           const dayMeals = weekAssignments[DAYS_SHORT[idx]] || {};
           const dayPts = pointsForMap(plantsForDay(dayMeals, recipesById));
-          const dayNut = Object.values(dayMeals).reduce((acc, rid) => {
-            const r = recipesById[rid];
+          const dayNut = Object.values(dayMeals).reduce((acc, raw) => {
+            const r = recipesById[slotInfo(raw).value];
             if (!r) return acc;
             const n = recipePerServing(r);
             acc.protein += n.protein; acc.fiber += n.fiber;
             return acc;
           }, { protein: 0, fiber: 0 });
-          const hasAny = Object.values(dayMeals).some(Boolean);
+          const hasAny = Object.values(dayMeals).some(raw => slotInfo(raw).value);
           return (
             <div key={day} className="rounded-xl p-3" style={{ background: C.card, border: `1px solid ${C.line}` }}>
               <div className="flex items-center justify-between mb-2 flex-wrap gap-x-3 gap-y-1">
@@ -1317,16 +1513,27 @@ function PlanTab({ monday, weekOffset, setWeekOffset, recipes, recipesById, week
                 )}
               </div>
               <div className="grid grid-cols-1 gap-1.5">
-                {MEALS.map(meal => (
-                  <div key={meal} className="flex items-center gap-2">
-                    <span className="text-xs w-20 shrink-0 f-mono" style={{ color: C.inkSoft }}>{meal}</span>
-                    <MealSlotInput
-                      value={weekAssignments[DAYS_SHORT[idx]]?.[meal] || ''}
-                      recipes={recipes}
-                      onChange={v => onAssign(DAYS_SHORT[idx], meal, v)}
-                    />
-                  </div>
-                ))}
+                {MEALS.map(meal => {
+                  const info = slotInfo(weekAssignments[DAYS_SHORT[idx]]?.[meal]);
+                  return (
+                    <div key={meal} className="flex items-center gap-2">
+                      <span className="text-xs w-20 shrink-0 f-mono" style={{ color: C.inkSoft }}>{meal}</span>
+                      <MealSlotInput
+                        value={info.value}
+                        recipes={recipes}
+                        onChange={v => onAssign(DAYS_SHORT[idx], meal, v)}
+                      />
+                      {info.value && (
+                        <button type="button" onClick={() => onToggleExclude(DAYS_SHORT[idx], meal)}
+                          title={info.excluded ? 'Nicht in Einkaufsliste' : 'In Einkaufsliste'}
+                          className="p-1.5 rounded-full shrink-0"
+                          style={{ color: info.excluded ? C.inkSoft : C.leaf, opacity: info.excluded ? 0.4 : 1 }}>
+                          <ShoppingCart size={15} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -1695,15 +1902,15 @@ function ReportTab({ monday, weekOffset, setWeekOffset, weekAssignments, recipes
   const dayRows = DAYS.map((day, idx) => {
     const dayMeals = weekAssignments[DAYS_SHORT[idx]] || {};
     const dPts = pointsForMap(plantsForDay(dayMeals, recipesById));
-    const dNut = Object.values(dayMeals).reduce((acc, rid) => {
-      const r = recipesById[rid];
+    const dNut = Object.values(dayMeals).reduce((acc, raw) => {
+      const r = recipesById[slotInfo(raw).value];
       if (!r) return acc;
       const n = recipePerServing(r);
       acc.protein += n.protein; acc.fiber += n.fiber;
       return acc;
     }, { protein: 0, fiber: 0 });
     weekProtein += dNut.protein; weekFiber += dNut.fiber;
-    return { day, pts: dPts, ...dNut, hasAny: Object.values(dayMeals).some(Boolean) };
+    return { day, pts: dPts, ...dNut, hasAny: Object.values(dayMeals).some(raw => slotInfo(raw).value) };
   });
   const avgProtein = weekProtein / 7;
   const avgFiber = weekFiber / 7;
