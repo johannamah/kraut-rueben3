@@ -30,7 +30,7 @@ const DAYS_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const MEALS = ['Frühstück', 'Mittag', 'Abend'];
 const PLANT_GOAL = 30;
 const UNITS = ['g', 'kg', 'ml', 'l', 'Stück', 'EL', 'TL', 'Prise', 'Bund'];
-const RECIPE_CATEGORIES = ['Frühstück', 'Hauptgericht', 'Suppe', 'Salat', 'Snack', 'Dessert', 'Beilage', 'Sauce/Dip'];
+const RECIPE_CATEGORIES = ['Frühstück', 'Hauptgericht', 'Suppe', 'Salat', 'Snack', 'Dessert', 'Beilage', 'Sauce/Dip', 'Brot'];
 
 const CATEGORY_META = {
   gemuese: { label: 'Gemüse', color: '#4C7A3F' },
@@ -213,12 +213,39 @@ const RAW_FOODS = [
   ['TK-Erbsen', 'gemuese', 1, 0, 66, 5, 0.4, 10, 5], ['TK-Spinat', 'gemuese', 1, 0, 20, 2.6, 0.3, 1.8, 2.5],
   ['TK-Beerenmischung', 'obst', 1, 0, 45, 0.8, 0.4, 10, 3], ['TK-Pommes Frites', 'sonstige', 0, 0, 155, 2.6, 5, 25, 2.3],
   ['Fischstäbchen', 'fisch', 0, 0, 210, 12, 11, 17, 0.8], ['TK-Pizza', 'sonstige', 0, 0, 250, 10, 10, 30, 2],
+  ['Wasser', 'sonstige', 0, 0, 0, 0, 0, 0, 0], ['Buchweizenflocken', 'getreide', 1, 0, 343, 13, 3.4, 71, 10],
+  ['Haferflocken', 'getreide', 1, 0, 372, 13.5, 7, 59, 10], ['Eier', 'eier', 0, 0, 155, 13, 11, 1.1, 0],
+  ['Agavendicksaft', 'extras', 1, 1, 310, 0.1, 0.5, 76, 0], ['Flohsamenschalen', 'extras', 1, 1, 227, 2, 1, 80, 85],
+  ['Zartbitterschokolade', 'sonstige', 0, 0, 546, 7.8, 31, 55, 11], ['Vollmilchschokolade', 'sonstige', 0, 0, 534, 7.6, 31, 58, 2],
+  ['Kartoffel', 'gemuese', 1, 0, 77, 2, 0.1, 17, 2.2],
 ];
-const FOOD_LIBRARY = RAW_FOODS.map(([name, cat, isPlant, quarter, kcal, protein, fat, carbs, fiber]) => ({
-  name, cat, isPlant: !!isPlant, quarter: !!quarter, perHundred: { kcal, protein, fat, carbs, fiber },
-}));
+// Manche Zutaten sind reine Verarbeitungsformen derselben Pflanze (z. B. Tomatenmark aus Tomate) –
+// für die Einkaufsliste/Nährwerte bleiben sie eigene Zutaten, für PlantPoints zählen sie als eine Art.
+const SPECIES_OVERRIDE = {
+  'tomatenmark': { key: 'tomate', label: 'Tomate' },
+  'passierte tomaten': { key: 'tomate', label: 'Tomate' },
+  'gehackte tomaten (dose)': { key: 'tomate', label: 'Tomate' },
+  'sonnengetrocknete tomaten': { key: 'tomate', label: 'Tomate' },
+};
+const FOOD_LIBRARY = RAW_FOODS.map(([name, cat, isPlant, quarter, kcal, protein, fat, carbs, fiber]) => {
+  const override = SPECIES_OVERRIDE[name.toLowerCase()];
+  return {
+    name, cat, isPlant: !!isPlant, quarter: !!quarter, perHundred: { kcal, protein, fat, carbs, fiber },
+    speciesKey: override ? override.key : name.toLowerCase(),
+    speciesLabel: override ? override.label : name,
+  };
+});
+function dedupSpecies(lib) {
+  const seen = new Map();
+  lib.forEach(p => {
+    const key = p.speciesKey || p.name.toLowerCase();
+    if (!seen.has(key)) seen.set(key, { name: p.speciesLabel || p.name, cat: p.cat, quarter: p.quarter, speciesKey: key });
+  });
+  return Array.from(seen.values());
+}
 const PLANT_LIBRARY = FOOD_LIBRARY.filter(f => f.isPlant);
-const PLANT_BY_KEY = new Map(PLANT_LIBRARY.map(p => [p.name.toLowerCase(), p]));
+const PLANT_SPECIES_LIBRARY = dedupSpecies(PLANT_LIBRARY);
+const PLANT_BY_KEY = new Map(PLANT_SPECIES_LIBRARY.map(p => [p.speciesKey, p]));
 const UNIT_GRAMS = { g: 1, kg: 1000, ml: 1, l: 1000, EL: 15, TL: 5, Prise: 0.3, Bund: 50 };
 function gramsFor(amount, unit) {
   if (!(unit in UNIT_GRAMS)) return null;
@@ -314,8 +341,8 @@ function recipePlantsForWeek(weekKey, data, recipesById) {
       if (!r) return;
       r.ingredients.forEach(ing => {
         if (ing.isPlant && ing.name.trim()) {
-          const key = ing.name.trim().toLowerCase();
-          if (!map.has(key)) map.set(key, { name: ing.name.trim(), cat: ing.cat || 'sonstige', quarter: !!ing.quarter });
+          const key = ing.speciesKey || ing.name.trim().toLowerCase();
+          if (!map.has(key)) map.set(key, { name: ing.speciesLabel || ing.name.trim(), cat: ing.cat || 'sonstige', quarter: !!ing.quarter });
         }
       });
     });
@@ -344,8 +371,8 @@ function plantsForDay(dayMeals, recipesById) {
     if (!r) return;
     r.ingredients.forEach(ing => {
       if (ing.isPlant && ing.name.trim()) {
-        const key = ing.name.trim().toLowerCase();
-        if (!map.has(key)) map.set(key, { name: ing.name.trim(), cat: ing.cat || 'sonstige', quarter: !!ing.quarter });
+        const key = ing.speciesKey || ing.name.trim().toLowerCase();
+        if (!map.has(key)) map.set(key, { name: ing.speciesLabel || ing.name.trim(), cat: ing.cat || 'sonstige', quarter: !!ing.quarter });
       }
     });
   });
@@ -377,10 +404,10 @@ function computeLifetimePlants(data, recipesById) {
   });
   Object.values(data.weekPlan).forEach(days => {
     Object.values(days).forEach(meals => {
-      Object.values(meals || {}).forEach(rid => {
-        const r = recipesById[rid];
+      Object.values(meals || {}).forEach(raw => {
+        const r = recipesById[slotInfo(raw).value];
         if (!r) return;
-        r.ingredients.forEach(ing => { if (ing.isPlant && ing.name.trim()) set.add(ing.name.trim().toLowerCase()); });
+        r.ingredients.forEach(ing => { if (ing.isPlant && ing.name.trim()) set.add(ing.speciesKey || ing.name.trim().toLowerCase()); });
       });
     });
   });
@@ -423,17 +450,19 @@ function handlePhotoFile(e, onChange, draft) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
+  reader.onerror = () => { console.error('Foto konnte nicht gelesen werden'); };
   reader.onload = () => {
     const img = new Image();
+    img.onerror = () => { console.error('Foto konnte nicht dekodiert werden'); };
     img.onload = () => {
-      const maxW = 900;
+      const maxW = 700;
       const scale = Math.min(1, maxW / img.width);
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
       onChange({ ...draft, photoDataUrl: dataUrl, hasPhoto: true, removePhoto: false });
     };
     img.src = reader.result;
@@ -511,10 +540,12 @@ function App() {
 
   const customPlantEntries = useMemo(() => (safeData.customPlants || []).map(c => ({
     name: c.name, cat: c.cat, quarter: !!c.quarter, isPlant: true, perHundred: null, custom: true,
+    speciesKey: c.name.toLowerCase(), speciesLabel: c.name,
   })), [safeData.customPlants]);
   const effectiveFoodLibrary = useMemo(() => [...FOOD_LIBRARY, ...customPlantEntries], [customPlantEntries]);
   const effectivePlantLibrary = useMemo(() => effectiveFoodLibrary.filter(f => f.isPlant), [effectiveFoodLibrary]);
-  const plantByKey = useMemo(() => new Map(effectivePlantLibrary.map(p => [p.name.toLowerCase(), p])), [effectivePlantLibrary]);
+  const effectiveSpeciesLibrary = useMemo(() => dedupSpecies(effectivePlantLibrary), [effectivePlantLibrary]);
+  const plantByKey = useMemo(() => new Map(effectiveSpeciesLibrary.map(p => [p.speciesKey, p])), [effectiveSpeciesLibrary]);
 
   function assignedRecipes() {
     const ids = [];
@@ -735,6 +766,7 @@ function App() {
             onOpen={r => setViewing(r)}
             onEdit={r => setEditing({ ...JSON.parse(JSON.stringify(r)), isNew: false, photoDataUrl: null, removePhoto: false })}
             onDelete={id => setConfirmDelete(id)}
+            foodLibrary={effectiveFoodLibrary}
           />
         )}
 
@@ -784,7 +816,7 @@ function App() {
             onTogglePlant={togglePlant}
             stats={stats}
             trend={trend}
-            plantLibrary={effectivePlantLibrary}
+            plantLibrary={effectiveSpeciesLibrary}
             onAddCustomPlant={addCustomPlant}
           />
         )}
@@ -801,7 +833,7 @@ function App() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-20 flex" style={{ background: C.card, borderTop: `1px solid ${C.line}`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-20 flex px-1.5 pt-1.5" style={{ background: C.card, borderTop: `1px solid ${C.line}`, paddingBottom: 'calc(0.4rem + env(safe-area-inset-bottom))' }}>
         {[
           ['recipes', 'Rezepte', BookOpen],
           ['plan', 'Wochenplan', CalendarDays],
@@ -812,8 +844,8 @@ function App() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
-            style={{ color: tab === key ? C.leaf : C.inkSoft }}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 mx-0.5 rounded-xl"
+            style={tab === key ? { color: C.leaf, background: C.leafSoft } : { color: C.inkSoft, background: 'transparent' }}
           >
             <Icon size={20} />
             <span style={{ fontSize: '10px' }}>{label}</span>
@@ -890,10 +922,22 @@ function StarRating({ value = 0, onChange, size = 15 }) {
 
 function RecipePhotoThumb({ id, hasPhoto, size = 80, wide = false }) {
   const [src, setSrc] = useState(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
+    setFailed(false);
     if (!hasPhoto) { setSrc(null); return; }
     let active = true;
-    window.storage.get('photo:' + id, true).then(res => { if (active && res) setSrc(res.value); }).catch(() => {});
+    window.storage.get('photo:' + id, true)
+      .then(res => {
+        if (!active) return;
+        if (res && res.value) setSrc(res.value);
+        else { console.error('Foto nicht gefunden für', id); setFailed(true); }
+      })
+      .catch(err => {
+        if (!active) return;
+        console.error('Foto laden fehlgeschlagen:', err);
+        setFailed(true);
+      });
     return () => { active = false; };
   }, [id, hasPhoto]);
   const boxStyle = wide ? { width: '100%', height: 180 } : { width: size, height: size };
@@ -904,12 +948,69 @@ function RecipePhotoThumb({ id, hasPhoto, size = 80, wide = false }) {
       </div>
     );
   }
+  if (failed) {
+    return (
+      <div className="rounded-lg flex items-center justify-center shrink-0" style={{ ...boxStyle, background: C.accentSoft }}>
+        <Camera size={wide ? 28 : Math.round(size * 0.3)} style={{ color: C.accent, opacity: 0.6 }} />
+      </div>
+    );
+  }
   if (!src) return <div className="rounded-lg animate-pulse shrink-0" style={boxStyle} />;
-  return <img src={src} alt="" className="rounded-lg object-cover shrink-0" style={boxStyle} />;
+  return <img src={src} alt="" className="rounded-lg object-cover shrink-0" style={boxStyle} onError={() => setFailed(true)} />;
 }
 
-function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
+function IngredientFilterBar({ filters, onAdd, onRemove, foodLibrary }) {
+  const [query, setQuery] = useState('');
+  const [showSuggest, setShowSuggest] = useState(false);
+  const q = query.trim().toLowerCase();
+  const suggestions = q.length > 0
+    ? foodLibrary.filter(p => p.name.toLowerCase().includes(q) && !filters.includes(p.name.toLowerCase())).slice(0, 6)
+    : [];
+  function addFilter(name) {
+    const key = name.trim().toLowerCase();
+    if (!key || filters.includes(key)) return;
+    onAdd(key);
+    setQuery('');
+    setShowSuggest(false);
+  }
+  return (
+    <div className="mb-3">
+      <div className="relative">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: C.card, border: `1px solid ${C.line}` }}>
+          <Search size={14} style={{ color: C.inkSoft }} />
+          <input value={query}
+            onChange={e => { setQuery(e.target.value); setShowSuggest(true); }}
+            onFocus={() => setShowSuggest(true)}
+            onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFilter(query); } }}
+            placeholder="Nach Zutat(en) filtern …" className="flex-1 text-sm outline-none" style={{ background: 'transparent' }} />
+        </div>
+        {showSuggest && suggestions.length > 0 && (
+          <div className="absolute left-0 right-0 mt-1 rounded-lg overflow-hidden z-10 scroll-thin" style={{ background: C.card, border: `1px solid ${C.line}`, maxHeight: 200, overflowY: 'auto' }}>
+            {suggestions.map(p => (
+              <button key={p.name} type="button" onMouseDown={() => addFilter(p.name)} className="w-full text-left px-2.5 py-1.5 text-sm">{p.name}</button>
+            ))}
+          </div>
+        )}
+      </div>
+      {filters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+          <span className="text-xs f-mono" style={{ color: C.inkSoft }}>muss enthalten:</span>
+          {filters.map(f => (
+            <span key={f} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs" style={{ background: C.leafSoft, color: C.leaf }}>
+              {f}
+              <button type="button" onClick={() => onRemove(f)}><X size={11} /></button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete, foodLibrary }) {
   const [filterCat, setFilterCat] = useState('');
+  const [ingredientFilters, setIngredientFilters] = useState([]);
   if (recipes.length === 0) {
     return (
       <div className="text-center py-16">
@@ -920,12 +1021,22 @@ function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
     );
   }
   const usedCats = RECIPE_CATEGORIES.filter(c => recipes.some(r => r.category === c));
-  const filtered = filterCat ? recipes.filter(r => r.category === filterCat) : recipes;
+  const filtered = recipes.filter(r =>
+    (!filterCat || r.category === filterCat) &&
+    ingredientFilters.every(f => r.ingredients.some(ing => ing.name.toLowerCase().includes(f)))
+  );
   return (
     <div>
       <button onClick={onAdd} className="mb-3 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm" style={{ background: C.ink, color: C.page }}>
         <Plus size={15} /> Neues Rezept
       </button>
+
+      <IngredientFilterBar
+        filters={ingredientFilters}
+        onAdd={f => setIngredientFilters(fs => [...fs, f])}
+        onRemove={f => setIngredientFilters(fs => fs.filter(x => x !== f))}
+        foodLibrary={foodLibrary}
+      />
 
       {usedCats.length > 0 && (
         <div className="flex gap-1.5 mb-4 overflow-x-auto scroll-thin">
@@ -943,7 +1054,7 @@ function RecipesTab({ recipes, onAdd, onOpen, onEdit, onDelete }) {
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>Keine Rezepte in dieser Kategorie.</p>
+        <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>Keine Rezepte gefunden.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(r => {
@@ -1131,15 +1242,29 @@ function RecipeDetail({ recipe, onClose, onEdit, onDelete, onAssign, onRate }) {
 
 function ExistingPhotoPreview({ id, onRemove }) {
   const [src, setSrc] = useState(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let active = true;
-    window.storage.get('photo:' + id, true).then(res => { if (active && res) setSrc(res.value); }).catch(() => {});
+    window.storage.get('photo:' + id, true)
+      .then(res => {
+        if (!active) return;
+        if (res && res.value) setSrc(res.value);
+        else setFailed(true);
+      })
+      .catch(err => { if (active) { console.error('Foto laden fehlgeschlagen:', err); setFailed(true); } });
     return () => { active = false; };
   }, [id]);
+  if (failed) {
+    return (
+      <div className="mb-3 h-24 rounded-lg flex items-center justify-center text-xs" style={{ background: C.accentSoft, color: C.accent }}>
+        Foto konnte nicht geladen werden
+      </div>
+    );
+  }
   if (!src) return <div className="mb-3 h-24 rounded-lg animate-pulse" style={{ background: C.leafSoft }} />;
   return (
     <div className="relative mb-3">
-      <img src={src} alt="" className="w-full h-40 object-cover rounded-lg" />
+      <img src={src} alt="" className="w-full h-40 object-cover rounded-lg" onError={() => setFailed(true)} />
       <button type="button" onClick={onRemove} className="absolute top-2 right-2 p-1.5 rounded-full" style={{ background: 'rgba(30,46,34,0.7)', color: '#fff' }}><X size={14} /></button>
     </div>
   );
@@ -1150,7 +1275,7 @@ function IngredientRow({ ing, onChange, onRemove, foodLibrary }) {
   const q = ing.name.trim().toLowerCase();
   const suggestions = q.length > 0 ? foodLibrary.filter(p => p.name.toLowerCase().includes(q)).slice(0, 6) : [];
   function pick(p) {
-    onChange({ ...ing, name: p.name, isPlant: p.isPlant, cat: p.cat, quarter: p.isPlant ? p.quarter : false, perHundred: p.perHundred });
+    onChange({ ...ing, name: p.name, isPlant: p.isPlant, cat: p.cat, quarter: p.isPlant ? p.quarter : false, perHundred: p.perHundred, speciesKey: p.speciesKey, speciesLabel: p.speciesLabel });
     setShowSuggest(false);
   }
   const nutrients = ingredientNutrients(ing);
@@ -1159,7 +1284,7 @@ function IngredientRow({ ing, onChange, onRemove, foodLibrary }) {
       <div className="flex gap-2">
         <div className="flex-1 min-w-0 relative">
           <input value={ing.name}
-            onChange={e => { onChange({ ...ing, name: e.target.value, isPlant: false, cat: undefined, quarter: false, perHundred: null }); setShowSuggest(true); }}
+            onChange={e => { onChange({ ...ing, name: e.target.value, isPlant: false, cat: undefined, quarter: false, perHundred: null, speciesKey: undefined, speciesLabel: undefined }); setShowSuggest(true); }}
             onFocus={() => setShowSuggest(true)}
             onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
             placeholder="Zutat" className="w-full px-2 py-1.5 rounded text-sm"
@@ -1789,12 +1914,12 @@ function PlantPicker({ manualSet, autoKeys, onToggle, plantLibrary, onAddCustomP
             </div>
             <div className="flex flex-wrap gap-1.5 items-center">
               {items.map(p => {
-                const key = p.name.toLowerCase();
+                const key = p.speciesKey || p.name.toLowerCase();
                 const isManual = !!manualSet[key];
                 const isAuto = autoKeys.has(key);
                 const active = isManual || isAuto;
                 return (
-                  <button key={p.name} onClick={() => onToggle(key)}
+                  <button key={key} onClick={() => onToggle(key)}
                     className="px-2.5 py-1 rounded-full text-xs flex items-center gap-1"
                     style={active ? { background: meta.color, color: '#fff' } : { background: C.card, border: `1px solid ${C.line}`, color: C.ink }}>
                     {p.name}{isAuto && <span style={{ fontSize: '10px' }}>🍽</span>}
